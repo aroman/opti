@@ -32,5 +32,9 @@ def get_todos():
 def index():
     return flask.render_template('index.html')
 
+@app.route('/app')
+def app_():
+    return flask.render_template('app.html')
+
 if __name__ == '__main__':
     app.run()
