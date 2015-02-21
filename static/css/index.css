@@ -649,12 +649,18 @@ header i {
     transform: translate3d(0, 0, 0);
 }
 
+.fadeInUp {
+    -webkit-animation-duration: 1s;
+}
+
 #googleSignInButton {
     float: left;
+    -webkit-animation-delay: 1s;
 }
 
 .learn-btn {
     margin-left: 20px;
     padding-top: 9px; 
-    padding-bottom: 9px; 
+    padding-bottom: 9px;
+    -webkit-animation-delay: 1s;
 }
