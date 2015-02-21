@@ -648,3 +648,13 @@ header i {
     -webkit-transform: translate3d(0, 0, 0);
     transform: translate3d(0, 0, 0);
 }
+
+#googleSignInButton {
+    float: left;
+}
+
+.learn-btn {
+    margin-left: 20px;
+    padding-top: 9px; 
+    padding-bottom: 9px; 
+}
