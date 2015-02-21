@@ -1,0 +1,2 @@
+# opti
+Painless consensus.
