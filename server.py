@@ -1,12 +1,36 @@
 import os
-from flask import Flask, request, session, g, redirect, url_for, \
-     abort, render_template, flash
+import json
+import flask
+import rethinkdb as r
+import rethinkdb.errors
 
-app = Flask(__name__)
+app = flask.Flask(__name__)
+app.debug = True
+
+DB_HOST = "db.opti.work"
+
+@app.before_request
+def before_request():
+    try:
+        flask.g.db_conn = r.connect(host=DB_HOST)
+    except rethinkdb.errors.RqlDriverError:
+        abort(503, "Couldn't connect to rethinkdb :(")
+
+@app.teardown_request
+def teardown_request(exception):
+    try:
+        flask.g.db_conn.close()
+    except AttributeError:
+        pass
+
+@app.route("/test", methods=['GET'])
+def get_todos():
+    selection = list(r.table('test').run(flask.g.db_conn))
+    return json.dumps(selection)
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return flask.render_template('index.html')
 
 if __name__ == '__main__':
     app.run()
