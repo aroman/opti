@@ -25,28 +25,44 @@
     }
     input {
       border-bottom: 1px solid white !important;
+      font-size: 32px !important;
+      /*font-family: 'Open Sans' !important;*/
     }
     .input-field label {
       color: white;
-      /*font-size: 16px;*/
+      /*font-size: 24px;*/
     }
     input:focus {
       box-shadow: none;
     }
-    .input-field input:focus + label {
-      color: white !important;
+    .press-enter {
+      font-size: 32px;
+      opacity: 0.50;
     }
-
+    .input-description {
+      font-size: 40px;
+    }
   </style>
 </head>
 
 <body>
   <img id="logo" src="/static/img/logo-white.png">
   <a id="signout" href="/signout">SIGN OUT</a>
-  <div class="row">
-    <div class="input-field col s12">
-      <input id="email" type="text" class="validate">
-      <label for="email">Email</label>
+  <div class="container">
+    <div class="row">
+      <div class="input-field col offset-s1 s10">
+        <span class="input-description">What&rsquo;s the meeting about?</span>
+      </div>
+    </div>
+    <div class="row">
+      <div class="input-field col offset-s1 s10">
+        <input id="meeting-name" type="text" class="validate" spellcheck='false' autofocus>
+      </div>
+    </div>
+    <div class="row">
+      <div class="input-field col offset-s1 s10">
+        <span class="press-enter">Press enter</span>
+      </div>
     </div>
   </div>
   <script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
