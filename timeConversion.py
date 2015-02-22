@@ -21,7 +21,7 @@ def algorithmToUser(algorithmTime):
     # Hour is before decimal
     hour = int(algorithmTime)
     # Adjust hour to non-military time, choose am or pm
-    if hour >= 12:
+    if hour > 12:
         hour -= 12
         suffix = "pm"
     else:
@@ -40,9 +40,9 @@ def algorithmTupleToUser(algorithmTuple):
     newStartHour = int(start)
     newEndHour = int(end)
 
-    if newStartHour >= 12:
+    if newStartHour > 12:
         newStartHour -= 12
-    if newEndHour >= 12:
+    if newEndHour > 12:
         newEndHour -= 12
         suffix = "p"
     else:
