@@ -69,46 +69,62 @@ def index():
 @authorize
 def app_():
     # yyyy-mm-ddTHH:MM:ss
-    body = {
-      "timeMin": "2015-02-22T00:00:00Z",
-      "timeMax": "2015-02-23T00:00:00Z",
-      "id": "aviromanoff@gmail.com"
-    }
-    fb = flask.g.calendar.freebusy().query(body=body).execute()
+    # fb = flask.g.calendar.freebusy().query(body=body).execute()
     # {'kind': 'calendar#freeBusy',
     #  'timeMax': '2015-02-23T00:00:00.000Z',
     #  'timeMin': '2015-02-22T00:00:00.000Z'}
-    cursor = r.table('credentials').run(flask.g.db_conn)
-    for credential_doc in cursor:
-      credentials = cred_from_cred_id(credential_doc['id'])
-      http = credentials.authorize(httplib2.Http())
-      calendar = build("calendar", "v3", http=http)
-      calendar.freebusy().query(body=body).execute()
-      pp(credential_doc['id'])
-      pp(calendar)
+    # cursor = r.table('credentials').run(flask.g.db_conn)
+    # for credential_doc in cursor:
+    #   credentials = cred_from_cred_id(credential_doc['id'])
+    #   http = credentials.authorize(httplib2.Http())
+    #   calendar = build("calendar", "v3", http=http)
+      # calendar.freebusy().query(body=body).execute()
+      # pp(credential_doc['id'])
+      # pp(calendar)
     return flask.render_template('app.html')
 
 @app.route('/results', methods=["POST"])
 @authorize
 def results():
+
+    data = json.loads(flask.request.data)
+
     # 1. get everyone's schedules
     # 2. get list of start and end times for each user's schedule
-    # 3. convert start and end times (google -> algorithm)
-    # 4. turn #3 into a dictionary and give it to algorithm function
-    # 5. algorithm -> user format
-    # 6. return #5 to client
-    data = json.loads(flask.request.data)
-    results = [
-      {
-        "start": "8am",
-        "end": "9:30:am"
-      },
-      {
-        "start": "1pm",
-        "end": "3pm"
+    # 3. convert (google -> algorithm) & reformat to alice format
+    cursor = r.table('credentials').run(flask.g.db_conn)
+    aliceData = {}
+    for credential_doc in cursor:
+      credentials = cred_from_cred_id(credential_doc['id'])
+      http = credentials.authorize(httplib2.Http())
+      calendar = build("calendar", "v3", http=http)
+      body = {
+        "timeMin": "2015-02-22T00:00:00-05:00",
+        "timeMax": "2015-02-23T00:00:00-05:00",
+        "items": [{"id": credential_doc['id']}]
       }
-    ]
-    return flask.jsonify(data=data, results=results)
+      fb = calendar.freebusy().query(body=body).execute()
+      fbtimes = fb['calendars'][credential_doc['id']]['busy']
+      # {
+      #   "avi@romanoff.me": [(st, end), (st, end)]
+      # }
+      aliceData[credential_doc['id']] = []
+      for fbtime in fbtimes:
+        aliceData[credential_doc['id']].append((
+          timeConversion.jsonToAlgorithm(fbtime['start']),
+          timeConversion.jsonToAlgorithm(fbtime['end'])
+        ))
+    goodTimes = algorithms.coreScheduler(aliceData)
+    results = []
+    for goodTime in goodTimes:
+      block = {
+        'start': timeConversion.algorithmToUser(goodTime[0]),
+        'end': timeConversion.algorithmToUser(goodTime[1])
+      }
+      results.append(block)
+    # 4. algorithm -> user format
+    # 5. return #4 to client
+    return flask.jsonify(results=results)
 
 @app.route('/schedule-meeting', methods=["POST"])
 @authorize

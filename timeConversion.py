@@ -52,8 +52,9 @@ def userDateToJsonDate(userDate):
     return "%04d-%02d-%02d" % (year, month, day)
 
 #test
-print jsonToAlgorithm("2015-02-24T19:30:00-05:00")
-print algorithmToUser(19.50)
-print algorithmToJson(19.50)
-print userDateToJsonDate("2/24")
+# print jsonToAlgorithm("2015-02-24T19:30:00-05:00")
+# print jsonToAlgorithm("2015-02-22T17:30:00Z")
+# print algorithmToUser(19.50)
+# print algorithmToJson(19.50)
+# print userDateToJsonDate("2/24")
 

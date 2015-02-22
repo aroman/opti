@@ -73,5 +73,5 @@ def testCoreScheduler():
 	print coreScheduler(schedules)
 	print findBestSchedule(schedules, "Chris")
 
-testCoreScheduler()
+# testCoreScheduler()
 

@@ -13,6 +13,7 @@
     <script>
       function signinCallback(authResult) {
         console.log(authResult);
+        
         if (authResult['code']) {
           // Send the code to the server
           $.ajax({
@@ -20,7 +21,11 @@
            url: '/store-token',
            contentType: 'application/octet-stream; charset=utf-8',
            success: function(result) {
-              window.location.reload();
+            if (location.port) {
+              window.location.replace("http://" + location.hostname + ":" + location.port + "/app");
+            } else {
+              window.location.replace("http://" + location.hostname + "/app");
+            }
            },
            processData: false,
            data: authResult['code']
