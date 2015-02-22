@@ -33,29 +33,29 @@ def teardown_request(exception):
     except AttributeError:
         pass
 
-def authorized(f):
+def cred_from_cred_id(cred_id):
+  cred_from_db = r.table('credentials').get(cred_id).run(flask.g.db_conn)
+  credentials = client.OAuth2Credentials(
+    cred_from_db['access_token'],
+    cred_from_db['client_id'],
+    cred_from_db['client_secret'],
+    cred_from_db['refresh_token'],
+    pyrfc3339.parse(cred_from_db['token_expiry']).replace(tzinfo=None),
+    cred_from_db['token_uri'],
+    cred_from_db['user_agent'],
+    revoke_uri=cred_from_db['revoke_uri'],
+    id_token=cred_from_db['id_token'],
+    token_response=cred_from_db['token_response']
+  )
+  return credentials
+
+def authorize(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'credential_id' not in flask.session:
           return flask.redirect('/')
-        c_key = flask.session.get('credential_id')
-        cred_from_db = r.table('credentials').get(c_key).run(flask.g.db_conn)
-        if not cred_from_db:
-          return flask.redirect('/')
-        credentials = client.OAuth2Credentials(
-          cred_from_db['access_token'],
-          cred_from_db['client_id'],
-          cred_from_db['client_secret'],
-          cred_from_db['refresh_token'],
-          pyrfc3339.parse(cred_from_db['token_expiry']).replace(tzinfo=None),
-          cred_from_db['token_uri'],
-          cred_from_db['user_agent'],
-          revoke_uri=cred_from_db['revoke_uri'],
-          id_token=cred_from_db['id_token'],
-          token_response=cred_from_db['token_response']
-        )
-        http = httplib2.Http()
-        http = credentials.authorize(http)
+        credentials = cred_from_cred_id(flask.session.get('credential_id'))
+        http = credentials.authorize(httplib2.Http())
         flask.g.calendar = build("calendar", "v3", http=http)
         return f(*args, **kwargs)
     return decorated_function
@@ -65,7 +65,7 @@ def index():
     return flask.render_template('index.html')
 
 @app.route('/app')
-@authorized
+@authorize
 def app_():
     # yyyy-mm-ddTHH:MM:ss
     body = {
@@ -77,10 +77,18 @@ def app_():
     # {'kind': 'calendar#freeBusy',
     #  'timeMax': '2015-02-23T00:00:00.000Z',
     #  'timeMin': '2015-02-22T00:00:00.000Z'}
+    cursor = r.table('credentials').run(flask.g.db_conn)
+    for credential_doc in cursor:
+      credentials = cred_from_cred_id(credential_doc['id'])
+      http = credentials.authorize(httplib2.Http())
+      calendar = build("calendar", "v3", http=http)
+      calendar.freebusy().query(body=body).execute()
+      pp(credential_doc['id'])
+      pp(calendar)
     return flask.render_template('app.html')
 
 @app.route('/get-results', methods=["POST"])
-@authorized
+@authorize
 def get_results():
     # 1. get everyone's schedules
     # 2. get list of start and end times for each user's schedule
@@ -91,7 +99,7 @@ def get_results():
     return flask.render_template('app.html')
 
 @app.route('/schedule-meeting', methods=["POST"])
-@authorized
+@authorize
 def schedule_meeting():
     # 1. convert to google format
     # 2. create the events for all the users
