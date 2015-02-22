@@ -129,6 +129,7 @@
             return
           }
           results = data['results'];
+          $("#results").fadeIn('slow');
         }
       });
     }
@@ -211,6 +212,11 @@
           Meeting.invitees.push(chunk.trim());
         });
         submitMeeting();
+        $("#container-meeting-invite").addClass("zoomOutUp animated");
+        $("#press-enter").fadeOut('slow');
+        $("#container-meeting-invite").one('webkitAnimationEnd', function() {
+          $("#container-meeting-invite").hide();
+        });
         // transition("duration", "invite");
       }
     });

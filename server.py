@@ -161,25 +161,38 @@ def schedule_meeting():
       }
     }
 
-    res = flask.g.calendar.events().insert(
+    createRes = flask.g.calendar.events().insert(
       calendarId=flask.session.get('credential_id'),
       sendNotifications=True,
       body=body
     ).execute()
 
-    pp(res)
+    pp(createRes)
+
+    body = {
+      "id": createRes['id'],
+      "type": "webhook",
+      "address": "https://opti-bridge.ngrok.com/update"
+    }
+
+    watchRes = flask.g.calendar.events().watch(
+      calendarId=flask.session.get('credential_id'),
+      body=body
+    ).execute()
+
+    pp(watchRes)
 
     # 2. create the events for all the users
       # Send request
     # 3. send an email
       # Set sendNotifications = true
-    return flask.jsonify(response=res)
+    return flask.jsonify(response=createRes)
 
-@app.route('/update')
+@app.route('/update', methods=["POST"])
 def update():
-  pp(flask.request.data)
-  pp(flask.request.body)
+  data = flask.request.data
   p['opti'].trigger('changed', {'message': 'hello world'})
+  return "OK!"
 
 @app.route('/store-token', methods=["POST"])
 def store_token():
