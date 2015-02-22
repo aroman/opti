@@ -26,24 +26,6 @@ def setup_db():
     except rethinkdb.errors.RqlDriverError:
         abort(503, "Couldn't connect to rethinkdb :(")
 
-@app.before_request
-def hydrate_credentials():
-    if 'credentials' not in flask.session: return
-    s = json.loads(flask.session.get('credentials'))
-    credentials = client.OAuth2Credentials(s['access_token'], s['client_id'],
-       s['client_secret'], s['refresh_token'], pyrfc3339.parse(s['token_expiry']).replace(tzinfo=None),
-       s['token_uri'], s['user_agent'],
-       revoke_uri=s['revoke_uri'],
-       id_token=s['id_token'],
-       token_response=s['token_response'])
-    http = httplib2.Http()
-    http = credentials.authorize(http)
-    if credentials.access_token_expired:
-        credentials.refresh(http)
-        flask.session['credentials'] = credentials.to_json()
-    flask.g.credentials = credentials
-    flask.g.service = build("calendar", "v3", http=http)
-
 @app.teardown_request
 def teardown_request(exception):
     try:
@@ -54,20 +36,32 @@ def teardown_request(exception):
 def authorized(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'credentials' not in flask.session:
-            return flask.redirect('/')
+        if 'credential_key' not in flask.session:
+          return flask.redirect('/')
+        c_key = flask.session.get('credential_key')
+        cred_from_db = r.table('credentials').get(c_key).run(flask.g.db_conn)
+        if not cred_from_db:
+          return flask.redirect('/')
+        credentials = client.OAuth2Credentials(
+          cred_from_db['access_token'],
+          cred_from_db['client_id'],
+          cred_from_db['client_secret'],
+          cred_from_db['refresh_token'],
+          pyrfc3339.parse(cred_from_db['token_expiry']).replace(tzinfo=None),
+          cred_from_db['token_uri'],
+          cred_from_db['user_agent'],
+          revoke_uri=cred_from_db['revoke_uri'],
+          id_token=cred_from_db['id_token'],
+          token_response=cred_from_db['token_response']
+        )
+        http = httplib2.Http()
+        http = credentials.authorize(http)
+        flask.g.service = build("calendar", "v3", http=http)
         return f(*args, **kwargs)
     return decorated_function
 
-# @app.route("/test", methods=['GET'])
-# def get_todos():
-#     selection = list(r.table('test').run(flask.g.db_conn))
-#     return json.dumps(selection)
-
 @app.route('/')
 def index():
-    if 'credentials' in flask.session:
-        return flask.redirect("/app")
     return flask.render_template('index.html')
 
 @app.route('/app')
@@ -135,9 +129,9 @@ def store_token():
                                200)
       response.headers['Content-Type'] = 'application/json'
       return response
-    # Store the access token in the flask.session for later use.
-    flask.session['credentials'] = credentials.to_json()
-    pp(credentials.to_json())
+    creds = json.loads(credentials.to_json())
+    query_res = r.table('credentials').insert(creds).run(flask.g.db_conn)
+    flask.session['credential_key'] = query_res['generated_keys'][0]
     response = flask.make_response(json.dumps('Successfully connected user.', 200))
     return response
 
