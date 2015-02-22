@@ -36,9 +36,9 @@ def teardown_request(exception):
 def authorized(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'credential_key' not in flask.session:
+        if 'credential_id' not in flask.session:
           return flask.redirect('/')
-        c_key = flask.session.get('credential_key')
+        c_key = flask.session.get('credential_id')
         cred_from_db = r.table('credentials').get(c_key).run(flask.g.db_conn)
         if not cred_from_db:
           return flask.redirect('/')
@@ -56,7 +56,7 @@ def authorized(f):
         )
         http = httplib2.Http()
         http = credentials.authorize(http)
-        flask.g.service = build("calendar", "v3", http=http)
+        flask.g.calendar = build("calendar", "v3", http=http)
         return f(*args, **kwargs)
     return decorated_function
 
@@ -73,7 +73,7 @@ def app_():
       "timeMax": "2015-02-23T00:00:00Z",
       "id": "aviromanoff@gmail.com"
     }
-    fb = flask.g.service.freebusy().query(body=body).execute()
+    fb = flask.g.calendar.freebusy().query(body=body).execute()
     # {'kind': 'calendar#freeBusy',
     #  'timeMax': '2015-02-23T00:00:00.000Z',
     #  'timeMin': '2015-02-22T00:00:00.000Z'}
@@ -116,22 +116,21 @@ def store_token():
     access_token = credentials.access_token
     url = ('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=%s'
            % access_token)
-    h = httplib2.Http()
-    result = json.loads(h.request(url, 'GET')[1])
+    http = httplib2.Http()
+    result = json.loads(http.request(url, 'GET')[1])
     # If there was an error in the access token info, abort.
     if result.get('error') is not None:
       response = flask.make_response(json.dumps(result.get('error')), 500)
       response.headers['Content-Type'] = 'application/json'
       return response
-    stored_credentials = flask.session.get('credentials')
-    if stored_credentials is not None:
+    if flask.session.get('credential_id') is not None:
       response = flask.make_response(json.dumps('Current user is already connected.'),
                                200)
       response.headers['Content-Type'] = 'application/json'
       return response
     creds = json.loads(credentials.to_json())
+    creds["id"] = flask.session['credential_id'] = creds['id_token']['email']
     query_res = r.table('credentials').insert(creds).run(flask.g.db_conn)
-    flask.session['credential_key'] = query_res['generated_keys'][0]
     response = flask.make_response(json.dumps('Successfully connected user.', 200))
     return response
 
