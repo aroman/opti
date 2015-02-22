@@ -7,6 +7,7 @@ import rethinkdb as r
 import rethinkdb.errors
 from functools import wraps
 from pprint import pprint as pp
+import algorithms, timeConversion
 
 from apiclient.discovery import build
 from oauth2client.client import flow_from_clientsecrets
@@ -113,8 +114,42 @@ def results():
 @authorize
 def schedule_meeting():
     # 1. convert to google format
+    title = "Meeting Name"  # From form
+    creator = "cvsinpa@gmail.com" # From session
+    date = timeConversion.userDateToJsonDate(userDate)    # From form
+    startTime = timeConversion.algorithmToJson(algorithmStart)  # From algorithm
+    startDateTime = startDate + "T" + startTime + "-05:00"  # Hardcoded TZ
+    endTime = timeConversion.algorithmToJson(algorithmEnd)
+    endDateTime = date + "T" + endTime + "-05:00"
+
+    attendees = ["aviromanoff@gmail.com", "rajatm96@gmail.com"]
+
+    # Somehow have to set sendNotifications to true in request
+    body = {
+      "creator": {
+        "id": creator
+      },
+      "start": {
+        "dateTime": startDateTime
+      },
+     "summary": title,
+     "attendees": [
+        {
+        "email": attendees[0]
+        },
+        {
+        "email": attendees[1]
+        }
+      ],
+        "end": {
+        "dateTime": endDateTime
+      }
+    }
+
     # 2. create the events for all the users
+      # Send request
     # 3. send an email
+      # Set sendNotifications = true
     return flask.render_template('app.html')
 
 @app.route('/store-token', methods=["POST"])
