@@ -56,4 +56,4 @@ print jsonToAlgorithm("2015-02-24T19:30:00-05:00")
 print algorithmToUser(19.50)
 print algorithmToJson(19.50)
 print userDateToJsonDate("2/24")
-    
+
