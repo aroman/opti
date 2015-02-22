@@ -83,8 +83,25 @@
       name: "",
       date: "",
       duration: "",
-      invitees: []
+      invitees: ""
     };
+
+    function submitMeeting() {
+      $.ajax({
+        type: "POST",
+        url: "/results",
+        data: JSON.stringify(Meeting),
+        contentType : "application/json",
+        success: function success(data, textStatus) {
+          if (textStatus !== "success") {
+            alert("Something went wrong :(")
+            console.log(data);
+            return
+          }
+          alert(JSON.stringify(data));
+        }
+      });
+    }
 
     function transition(oldName, newName) {
       var oldEl = $("#container-meeting-" + oldName);
@@ -115,15 +132,25 @@
 
     $("#meeting-time").keyup(function (e) {
       if (e.keyCode === 13) {
-        Meeting.name = $("#meeting-time").val();
+        Meeting.time = $("#meeting-time").val();
         transition("time", "duration");
       }
     });
 
     $("#meeting-duration").keyup(function (e) {
       if (e.keyCode === 13) {
-        Meeting.name = $("#meeting-time").val();
+        Meeting.duration = $("#meeting-duration").val();
         transition("duration", "invite");
+      }
+    });
+
+    $("#meeting-invite").keyup(function (e) {
+      if (e.keyCode === 13) {
+        $("#meeting-invite").val().split(",").forEach(function (chunk) {
+          Meeting.invitees.push(chunk.trim());
+        });
+        submitMeeting();
+        // transition("duration", "invite");
       }
     });
 

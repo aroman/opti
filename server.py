@@ -87,16 +87,27 @@ def app_():
       pp(calendar)
     return flask.render_template('app.html')
 
-@app.route('/get-results', methods=["POST"])
+@app.route('/results', methods=["POST"])
 @authorize
-def get_results():
+def results():
     # 1. get everyone's schedules
     # 2. get list of start and end times for each user's schedule
     # 3. convert start and end times (google -> algorithm)
     # 4. turn #3 into a dictionary and give it to algorithm function
     # 5. algorithm -> user format
     # 6. return #5 to client
-    return flask.render_template('app.html')
+    data = json.loads(flask.request.data)
+    results = [
+      {
+        "start": "8am",
+        "end": "9:30:am"
+      },
+      {
+        "start": "1pm",
+        "end": "3pm"
+      }
+    ]
+    return flask.jsonify(data=data, results=results)
 
 @app.route('/schedule-meeting', methods=["POST"])
 @authorize
