@@ -4,9 +4,12 @@ import flask
 import httplib2
 import rethinkdb as r
 import rethinkdb.errors
+from pprint import pprint as pp
 
+from apiclient.discovery import build
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
+from oauth2client import client
 
 app = flask.Flask(__name__)
 app.debug = True
@@ -40,7 +43,59 @@ def index():
 
 @app.route('/app')
 def app_():
-    print flask.session
+    if 'credentials' not in flask.session:
+        return flask.redirect("/")
+    s = json.loads(flask.session.get('credentials'))
+    credential = client.OAuth2Credentials(s['access_token'], s['client_id'],
+                                   s['client_secret'], s['refresh_token'], s['token_expiry'],
+                                   s['token_uri'], s['user_agent'],
+                                   revoke_uri=s['revoke_uri'],
+                                   id_token=s['id_token'],
+                                   token_response=s['token_response'])
+    # print client.OAuth2Credentials
+    http = httplib2.Http()
+    http = credential.authorize(http)
+    service = build("calendar", "v3", http=http)
+    try:
+      page_token = None
+      while True:
+        calendar_list = service.calendarList().list(pageToken=page_token).execute()
+        for calendar_list_entry in calendar_list['items']:
+          print calendar_list_entry['summary']
+        page_token = calendar_list.get('nextPageToken')
+        if not page_token:
+          break
+
+    except client.AccessTokenRefreshError:
+      print ('The credentials have been revoked or expired, please re-run'
+        'the application to re-authorize.')
+
+    # activitylist = events.list(collection='public',
+                                   # userId='me').execute()
+    # return str(activitylist)
+    # return flask.render_template('app.html')
+
+@app.route('/get-results')
+def get_results():
+    # 1. get everyone's schedules
+    # 2. get list of start and end times for each user's schedule
+    # 3. convert start and end times (google -> algorithm)
+    # 4. turn #3 into a dictionary and give it to algorithm function
+    # 5. algorithm -> user format
+    # 6. return #5 to client 
+    if 'credentials' not in flask.session:
+        print "yo"
+        return flask.redirect("/")
+    return flask.render_template('app.html')
+
+@app.route('/schedule-meeting')
+def schedule_meeting():
+    # 1. convert to google format
+    # 2. create the events for all the users
+    # 3. send an email
+    if 'credentials' not in flask.session:
+        print "yo"
+        return flask.redirect("/")
     return flask.render_template('app.html')
 
 @app.route('/store-token', methods=["POST"])
