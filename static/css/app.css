@@ -22,6 +22,11 @@ input {
   font-size: 32px !important;
 }
 
+::-webkit-input-placeholder {
+  color: white;
+  opacity: 0.35;
+}
+
 .input-field label {
   color: white;
 }
@@ -30,7 +35,7 @@ input:focus {
   box-shadow: none;
 }
 
-.press-enter {
+#press-enter {
   font-size: 32px;
   opacity: 0.50;
 }
