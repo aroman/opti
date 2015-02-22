@@ -5,54 +5,145 @@
 
   <link href='//fonts.googleapis.com/css?family=Open+Sans:400,300,700' rel='stylesheet' type='text/css'>
   <link rel="stylesheet" href="/static/css/materialize.css">
+  <link rel="stylesheet" href="/static/css/animate.css">
   <link rel="stylesheet" href="/static/css/app.css">
-  <style>
-    body {
-      background: linear-gradient(#53A0FD, #00BCD4); 
-      font-family: 'Open Sans';
-      color: white !important;
-    }
-    #logo {
-      margin: 40px;
-    }
-    #signout {
-      float: right;
-      margin: 40px;
-      font-size: 20px;
-      color: white;
-      font-weight: 300;
-      margin-top: 55px;
-    }
-    input {
-      border-bottom: 1px solid white !important;
-    }
-    .input-field label {
-      color: white;
-      /*font-size: 16px;*/
-    }
-    input:focus {
-      box-shadow: none;
-    }
-    .input-field input:focus + label {
-      color: white !important;
-    }
-
-  </style>
 </head>
 
 <body>
   <img id="logo" src="/static/img/logo-white.png">
   <a id="signout" href="/signout">SIGN OUT</a>
-  <div class="row">
-    <div class="input-field col s12">
-      <input id="email" type="text" class="validate">
-      <label for="email">Email</label>
+  <div class="container">
+
+    <div id="container-meeting-name">
+      <div class="row">
+        <div class="input-field col offset-s1 s10">
+          <span class="input-description">What&rsquo;s the meeting about?</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col offset-s1 s10">
+          <input id="meeting-name" type="text" class="validate" spellcheck='false' autofocus>
+        </div>
+      </div>
+    </div>
+
+    <div id="container-meeting-time" style="display:none">
+      <div class="row">
+        <div class="input-field col offset-s1 s10">
+          <span class="input-description">When do you want to meet?</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col offset-s1 s10">
+          <input id="meeting-time" type="text" class="validate" spellcheck='false' autofocus placeholder="DD/MM">
+        </div>
+      </div>
+    </div>
+
+    <div id="container-meeting-duration" style="display:none">
+      <div class="row">
+        <div class="input-field col offset-s1 s10">
+          <span class="input-description">How long is the meeting?</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col offset-s1 s10">
+          <input id="meeting-duration" type="text" class="validate" spellcheck='false' autofocus>
+        </div>
+      </div>
+    </div>
+
+    <div id="container-meeting-invite" style="display:none">
+      <div class="row">
+        <div class="input-field col offset-s1 s10">
+          <span class="input-description">Who do you want to invite?</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col offset-s1 s10">
+          <input id="meeting-invite" type="text" class="validate" spellcheck='false' autofocus>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="row">
+      <div class="input-field col offset-s1 s10">
+        <span id="press-enter">Press enter</span>
+      </div>
     </div>
   </div>
-  <script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script src="/static/js/underscore.js"></script>
+  <script src="/static/js/backbone.js"></script>
+  <script src="/static/js/jquery-2.1.1.min.js"></script>
   <script src="/static/js/materialize.js"></script>
   <script>
-  console.log("yo");
+    var Meeting = {
+      name: "",
+      date: "",
+      duration: "",
+      invitees: []
+    };
+
+    function transition(oldName, newName) {
+      var oldEl = $("#container-meeting-" + oldName);
+      var newEl = $("#container-meeting-" + newName);
+
+      oldEl.css("-webkit-animation-duration", "0.5s")
+      newEl.css("-webkit-animation-duration", "0.5s")
+
+      $("#press-enter").fadeOut('slow');
+      oldEl.addClass("animated fadeOutUp");
+      oldEl.one('webkitAnimationEnd', function() {
+        oldEl.hide();
+        newEl.show();
+        newEl.addClass("animated fadeInUp");
+        newEl.fadeIn(function() {
+          $(newEl).find("input").focus();
+        });
+        $("#press-enter").fadeIn('slow');
+      });
+    }
+
+    $("#meeting-name").keyup(function (e) {
+      if (e.keyCode === 13) {
+        Meeting.name = $("#meeting-name").val();
+        transition("name", "time");
+      }
+    });
+
+    $("#meeting-time").keyup(function (e) {
+      if (e.keyCode === 13) {
+        Meeting.name = $("#meeting-time").val();
+        transition("time", "duration");
+      }
+    });
+
+    $("#meeting-duration").keyup(function (e) {
+      if (e.keyCode === 13) {
+        Meeting.name = $("#meeting-time").val();
+        transition("duration", "invite");
+      }
+    });
+
+    // var FormView = Backbone.View.extend({
+
+    //   events: {
+    //     "click .icon":          "open",
+    //     "click .button.edit":   "openEditDialog",
+    //     "click .button.delete": "destroy"
+    //   },
+
+    //   initialize: function() {
+    //     this.listenTo(this.model, "change", this.render);
+    //   },
+
+    //   render: function() {
+    //     ...
+    //   }
+
+    // });
+    console.log("yo");
   </script>
 </body>
 </html>

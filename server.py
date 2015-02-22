@@ -36,5 +36,10 @@ def index():
 def app_():
     return flask.render_template('app.html')
 
+@app.route('/signout')
+def signout():
+    return "not implemented yet"
+
+
 if __name__ == '__main__':
     app.run()
