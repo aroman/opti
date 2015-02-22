@@ -1,6 +1,7 @@
 import os
 import json
 import flask
+import pusher
 import pyrfc3339
 import httplib2
 import rethinkdb as r
@@ -19,6 +20,12 @@ app.debug = True
 app.secret_key = 'SUPER FUCKIN SECRET'
 
 DB_HOST = "db.opti.work"
+
+p = pusher.Pusher(
+  app_id='108152',
+  key='d4e7e5fff78e15c3eaa8',
+  secret='d0ca1033bf21845d81cf'
+)
 
 @app.before_request
 def setup_db():
@@ -74,19 +81,6 @@ def app_results():
 @app.route('/app')
 @authorize
 def app_():
-    # yyyy-mm-ddTHH:MM:ss
-    # fb = flask.g.calendar.freebusy().query(body=body).execute()
-    # {'kind': 'calendar#freeBusy',
-    #  'timeMax': '2015-02-23T00:00:00.000Z',
-    #  'timeMin': '2015-02-22T00:00:00.000Z'}
-    # cursor = r.table('credentials').run(flask.g.db_conn)
-    # for credential_doc in cursor:
-    #   credentials = cred_from_cred_id(credential_doc['id'])
-    #   http = credentials.authorize(httplib2.Http())
-    #   calendar = build("calendar", "v3", http=http)
-      # calendar.freebusy().query(body=body).execute()
-      # pp(credential_doc['id'])
-      # pp(calendar)
     return flask.render_template('app.html')
 
 @app.route('/results', methods=["POST"])
@@ -124,7 +118,8 @@ def results():
     results = []
     for goodTime in goodTimes:
       block = {
-        'time': timeConversion.algorithmTupleToUser(goodTime),
+        'humanTime': timeConversion.algorithmTupleToUser(goodTime),
+        'algorithmTime': goodTime
       }
       results.append(block)
     # 4. algorithm -> user format
@@ -134,44 +129,57 @@ def results():
 @app.route('/schedule-meeting', methods=["POST"])
 @authorize
 def schedule_meeting():
+
+    data = json.loads(flask.request.data)
+    pp(data)
     # 1. convert to google format
-    title = "Meeting Name"  # From form
-    creator = "cvsinpa@gmail.com" # From session
-    date = timeConversion.userDateToJsonDate(userDate)    # From form
-    startTime = timeConversion.algorithmToJson(algorithmStart)  # From algorithm
-    startDateTime = startDate + "T" + startTime + "-05:00"  # Hardcoded TZ
-    endTime = timeConversion.algorithmToJson(algorithmEnd)
+    date = timeConversion.userDateToJsonDate(data['date'])    # From form
+    startTime = timeConversion.algorithmToJson(data['algorithmTime'][0])  # From algorithm
+    startDateTime = date + "T" + startTime + "-05:00"  # Hardcoded TZ
+    endTime = timeConversion.algorithmToJson(data['algorithmTime'][1])
     endDateTime = date + "T" + endTime + "-05:00"
 
-    attendees = ["aviromanoff@gmail.com", "rajatm96@gmail.com"]
+    attendees = []
+    for invitee in data['invitees']:
+      attendees.append({
+        'email': invitee  
+      })
 
     # Somehow have to set sendNotifications to true in request
     body = {
       "creator": {
-        "id": creator
+        "id": flask.session.get('credential_id')
       },
       "start": {
         "dateTime": startDateTime
       },
-     "summary": title,
-     "attendees": [
-        {
-        "email": attendees[0]
-        },
-        {
-        "email": attendees[1]
-        }
-      ],
+     "summary": data['name'],
+     "location": data['location'],
+     "attendees": attendees,
         "end": {
         "dateTime": endDateTime
       }
     }
 
+    res = flask.g.calendar.events().insert(
+      calendarId=flask.session.get('credential_id'),
+      sendNotifications=True,
+      body=body
+    ).execute()
+
+    pp(res)
+
     # 2. create the events for all the users
       # Send request
     # 3. send an email
       # Set sendNotifications = true
-    return flask.render_template('app.html')
+    return flask.jsonify(response=res)
+
+@app.route('/update')
+def update():
+  pp(flask.request.data)
+  pp(flask.request.body)
+  p['opti'].trigger('changed', {'message': 'hello world'})
 
 @app.route('/store-token', methods=["POST"])
 def store_token():
