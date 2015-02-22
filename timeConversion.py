@@ -59,7 +59,7 @@ def algorithmTupleToUser(algorithmTuple):
 def algorithmToJson(algorithmTime):
     # Hour is same as algorithmTime hour
     hour = int(algorithmTime)
-    hour += 5 # adjust for tz
+    #hour += 5 # adjust for tz
     # Minute is algorithmTime after decimal as fraction of 60
     minute = int((algorithmTime % 1) * 100) * 60 / 100
 
