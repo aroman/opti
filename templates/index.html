@@ -20,8 +20,7 @@
            url: '/store-token',
            contentType: 'application/octet-stream; charset=utf-8',
            success: function(result) {
-             console.log(result);
-              window.location.replace("http://localhost:5000/app")
+              window.location.reload();
            },
            processData: false,
            data: authResult['code']

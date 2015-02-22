@@ -4,6 +4,7 @@ import flask
 import httplib2
 import rethinkdb as r
 import rethinkdb.errors
+from functools import wraps
 from pprint import pprint as pp
 
 from apiclient.discovery import build
@@ -19,11 +20,25 @@ DB_HOST = "db.opti.work"
 CLIENT_ID = "614450015763-gudcs7evjopheo8h6nb9q9ct6ga42pqj.apps.googleusercontent.com"
 
 @app.before_request
-def before_request():
+def setup_db():
     try:
         flask.g.db_conn = r.connect(host=DB_HOST)
     except rethinkdb.errors.RqlDriverError:
         abort(503, "Couldn't connect to rethinkdb :(")
+
+@app.before_request
+def hydrate_credentials():
+    if 'credentials' not in flask.session: return
+    s = json.loads(flask.session.get('credentials'))
+    credential = client.OAuth2Credentials(s['access_token'], s['client_id'],
+       s['client_secret'], s['refresh_token'], s['token_expiry'],
+       s['token_uri'], s['user_agent'],
+       revoke_uri=s['revoke_uri'],
+       id_token=s['id_token'],
+       token_response=s['token_response'])
+    http = httplib2.Http()
+    http = credential.authorize(http)
+    flask.g.service = build("calendar", "v3", http=http)
 
 @app.teardown_request
 def teardown_request(exception):
@@ -32,34 +47,32 @@ def teardown_request(exception):
     except AttributeError:
         pass
 
-@app.route("/test", methods=['GET'])
-def get_todos():
-    selection = list(r.table('test').run(flask.g.db_conn))
-    return json.dumps(selection)
+def authorized(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'credentials' not in flask.session:
+            return redirect(url_for('/', next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# @app.route("/test", methods=['GET'])
+# def get_todos():
+#     selection = list(r.table('test').run(flask.g.db_conn))
+#     return json.dumps(selection)
 
 @app.route('/')
 def index():
+    if 'credentials' in flask.session:
+        return flask.redirect("/app")
     return flask.render_template('index.html')
 
 @app.route('/app')
+@authorized
 def app_():
-    if 'credentials' not in flask.session:
-        return flask.redirect("/")
-    s = json.loads(flask.session.get('credentials'))
-    credential = client.OAuth2Credentials(s['access_token'], s['client_id'],
-                                   s['client_secret'], s['refresh_token'], s['token_expiry'],
-                                   s['token_uri'], s['user_agent'],
-                                   revoke_uri=s['revoke_uri'],
-                                   id_token=s['id_token'],
-                                   token_response=s['token_response'])
-    # print client.OAuth2Credentials
-    http = httplib2.Http()
-    http = credential.authorize(http)
-    service = build("calendar", "v3", http=http)
     try:
       page_token = None
       while True:
-        calendar_list = service.calendarList().list(pageToken=page_token).execute()
+        calendar_list = flask.g.service.calendarList().list(pageToken=page_token).execute()
         for calendar_list_entry in calendar_list['items']:
           print calendar_list_entry['summary']
         page_token = calendar_list.get('nextPageToken')
@@ -75,7 +88,8 @@ def app_():
     # return str(activitylist)
     return flask.render_template('app.html')
 
-@app.route('/get-results')
+@app.route('/get-results', methods=["POST"])
+@authorized
 def get_results():
     # 1. get everyone's schedules
     # 2. get list of start and end times for each user's schedule
@@ -83,25 +97,24 @@ def get_results():
     # 4. turn #3 into a dictionary and give it to algorithm function
     # 5. algorithm -> user format
     # 6. return #5 to client 
+    print flask.g.credentials
     if 'credentials' not in flask.session:
-        print "yo"
         return flask.redirect("/")
     return flask.render_template('app.html')
 
-@app.route('/schedule-meeting')
+@app.route('/schedule-meeting', methods=["POST"])
+@authorized
 def schedule_meeting():
     # 1. convert to google format
     # 2. create the events for all the users
     # 3. send an email
     if 'credentials' not in flask.session:
-        print "yo"
         return flask.redirect("/")
     return flask.render_template('app.html')
 
 @app.route('/store-token', methods=["POST"])
 def store_token():
     code = flask.request.data
-    gplus_id = flask.request.args.get("gplus_id")
     try:
        # Upgrade the authorization code into a credentials object
        oauth_flow = flow_from_clientsecrets('client_secrets.json', scope='')
@@ -124,12 +137,6 @@ def store_token():
       response = flask.make_response(json.dumps(result.get('error')), 500)
       response.headers['Content-Type'] = 'application/json'
       return response
-    # Verify that the access token is used for the intended user.
-    # if result['user_id'] != gplus_id:
-    #   response = flask.make_response(
-    #       json.dumps("Token's user ID doesn't match given user ID."), 401)
-    #   response.headers['Content-Type'] = 'application/json'
-    #   return response
     # Verify that the access token is valid for this app.
     if result['issued_to'] != CLIENT_ID:
       response = flask.make_response(
@@ -137,15 +144,13 @@ def store_token():
       response.headers['Content-Type'] = 'application/json'
       return response
     stored_credentials = flask.session.get('credentials')
-    stored_gplus_id = flask.session.get('gplus_id')
-    if stored_credentials is not None and gplus_id == stored_gplus_id:
+    if stored_credentials is not None:
       response = flask.make_response(json.dumps('Current user is already connected.'),
                                200)
       response.headers['Content-Type'] = 'application/json'
       return response
     # Store the access token in the flask.session for later use.
     flask.session['credentials'] = credentials.to_json()
-    flask.session['gplus_id'] = gplus_id
     response = flask.make_response(json.dumps('Successfully connected user.', 200))
     return response
 
