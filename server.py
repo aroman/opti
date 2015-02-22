@@ -99,8 +99,8 @@ def results():
       http = credentials.authorize(httplib2.Http())
       calendar = build("calendar", "v3", http=http)
       body = {
-        "timeMin": "2015-02-23T00:00:00-05:00",
-        "timeMax": "2015-02-24T00:00:00-05:00",
+        "timeMin": "2015-02-24T00:00:00-05:00",
+        "timeMax": "2015-02-25T00:00:00-05:00",
         "items": [{"id": credential_doc['id']}]
       }
       fb = calendar.freebusy().query(body=body).execute()
@@ -115,6 +115,8 @@ def results():
           timeConversion.jsonToAlgorithm(fbtime['start']),
           timeConversion.jsonToAlgorithm(fbtime['end'])
         ))
+    print 'aliceData:'
+    pp(aliceData)
     goodTimes = algorithms.coreScheduler(aliceData)
     results = []
     print "good times:"
