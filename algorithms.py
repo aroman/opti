@@ -5,16 +5,44 @@
 # if there's no time available, recommend a day and time in a week
 
 
-def coreScheduler(schedules, duration = .25, beginTime = 9, endTime = 17):
-	for user in schedules:
-		conflicts = schedules[user]
-		while beginTime < endTime:
+# takes in a schedule, in the form of a dictionary
+def coreScheduler(schedules, duration = .5, beginTime = 9, endTime = 17, increment = .25):
+	possibilities = []
+	while True:
+		for user in schedules:
+			conflicts = schedules[user]
+			while beginTime < endTime:
+				if not goodTime(beginTime, beginTime + duration, conflicts):
+					beginTime += increment
+				else: break
+		if beginTime < endTime:
+			possibilities.append((beginTime, beginTime + duration))
+		if len(possibilities) == 4 or beginTime == endTime: break
+		beginTime += increment
+	if possibilities != []: return possibilities
+	return "There are no schedules!"
+
+def findBestSchedule(schedules, mainUser, duration = .5, beginTime = 9, \
+						endTime = 17, increment = .25, numOutput = 4):
+	numConflicts = 0
+	possibilities = []
+	for i in xrange(len(schedules)):
+		possibilities.append([])
+	while beginTime < endTime:
+		isBad = False
+		for user in schedules:
+			conflicts = schedules[user]
+			if not goodTime(beginTime, beginTime + duration, schedules[mainUser]):
+				isBad = True
+				break
 			if not goodTime(beginTime, beginTime + duration, conflicts):
-				beginTime += duration
-			else: break
-	if beginTime < endTime:
-		return (beginTime, beginTime + duration)
-	return "There is no good time to meet."
+				numConflicts += 1
+				continue
+		if not isBad:
+			possibilities[numConflicts].append((beginTime, beginTime + duration))
+		beginTime += increment
+		numConflicts = 0
+	return possibilities
 
 # determines whether or not the hypothetical meeting times are efficient
 def goodTime(beginTime, endTime, conflicts):
@@ -27,7 +55,7 @@ def goodTime(beginTime, endTime, conflicts):
 			return False
 	return True
 
-# takes in a 2d list that represents a week of days, each day is a dictionary
+# takes in a list of dictionaries
 # passes into the core scheduler
 def recommendTime(schedules, duration = .25, beginTime = 9, endTime = 17):
 	for i in xrange(len(schedules)):
@@ -41,6 +69,9 @@ def testCoreScheduler():
 	schedules["Alice"] = [(9,10),(15.5,16),(17,18)]
 	schedules["Pulkita"] = [(8,9.5), (14,15), (16,17)]
 	schedules["Avi"] = [(7,10), (11, 12), (14,17)]
+	schedules["Chris"] = [(7,11)]
 	print coreScheduler(schedules)
+	print findBestSchedule(schedules, "Chris")
 
 testCoreScheduler()
+
