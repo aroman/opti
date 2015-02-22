@@ -118,8 +118,7 @@ def results():
     results = []
     for goodTime in goodTimes:
       block = {
-        'start': timeConversion.algorithmToUser(goodTime[0]),
-        'end': timeConversion.algorithmToUser(goodTime[1])
+        'time': timeConversion.algorithmTupleToUser(goodTime),
       }
       results.append(block)
     # 4. algorithm -> user format
