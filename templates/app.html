@@ -80,6 +80,44 @@
       </div>
     </div>
 
+    <div id="container-results" style="display:none">
+      <div class="row">
+        <div class="input-field col offset-s5 s6" style=>
+          <span class="input-description">Results</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field ">
+          <span class="results-status">Everyone is available!</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col s12">
+          <span class="results-date"><span style="font-weight: normal">Date:</span> February 22 </span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field offset-s5 s6">
+            <input class="with-gap time-option" name="group1" type="radio" id="time1" />
+            <label for="time1">loading...</label>
+          <br><br>
+            <input class="with-gap time-option" name="group1" type="radio" id="time2" />
+            <label for="time2">loading...</label>
+          <br><br>
+            <input class="with-gap time-option" name="group1" type="radio" id="time3" />
+            <label for="time3">loading...</label>
+        </div>
+      </div>
+    </div>
+
+    <div id="container-meeting-status" style="display:none">
+      <div class="row">
+        <div class="input-field col offset-s4">
+          <span class="input-description">Meeting scheduled!</span>
+        </div>
+      </div>
+    </div>
+
     <div class="row">
       <div class="input-field col offset-s1 s10">
         <span id="press-enter">Press enter</span>
@@ -94,16 +132,17 @@
   <script src="/static/js/materialize.js"></script>
   <script>
 
-    Pusher.log = function(message) {
-      if (window.console && window.console.log) {
-        window.console.log(message);
-      }
-    };
+    // Pusher.log = function(message) {
+    //   if (window.console && window.console.log) {
+    //     window.console.log(message);
+    //   }
+    // };
 
     var pusher = new Pusher('d4e7e5fff78e15c3eaa8');
     var channel = pusher.subscribe('opti');
     channel.bind('changed', function(data) {
-      alert(JSON.stringify(data));
+      console.log("PUSHER:::")
+      console.log(JSON.stringify(data));
     });
 
     var Meeting = {
@@ -129,10 +168,18 @@
             return
           }
           results = data['results'];
+          results.forEach(function(result, i) {
+            $("#time" + (i+1)).next().text(result.humanTime);
+          });
           $("#results").fadeIn('slow');
         }
       });
     }
+
+    $(".time-option").on('click', function(e) {
+      var optionNum = e.target.id.slice(-1);
+      scheduleMeeting(Number(optionNum) - 1);
+    });
 
     function scheduleMeeting(resultIndex) {
       postData = {
@@ -151,9 +198,11 @@
           if (textStatus !== "success") {
             alert("Something went wrong :(")
             console.log(data);
-            return
+            return;
           }
           console.log(JSON.stringify(data));
+          $("#container-meeting-status").show();
+          $("#container-meeting-status").addClass("zoomInDown animated");
         }
       });
     }
@@ -212,10 +261,12 @@
           Meeting.invitees.push(chunk.trim());
         });
         submitMeeting();
+        $("#press-enter").parent().fadeOut('slow');
+        $("#container-meeting-invite").css("-webkit-animation-duration", "2s")
         $("#container-meeting-invite").addClass("zoomOutUp animated");
-        $("#press-enter").fadeOut('slow');
         $("#container-meeting-invite").one('webkitAnimationEnd', function() {
           $("#container-meeting-invite").hide();
+          $("#container-results").fadeIn('slow');
         });
         // transition("duration", "invite");
       }
