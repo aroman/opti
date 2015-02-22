@@ -28,7 +28,7 @@ def algorithmToUser(algorithmTime):
     # Minute is after decimal, as a fraction of 60
     minute = int((algorithmTime % 1) * 100) * 60 / 100
 
-    userTime = "%s:%s%s" % (hour, minute, suffix)
+    userTime = "02d:02d%s" % (hour, minute, suffix)
 
     return userTime
 
