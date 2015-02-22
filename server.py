@@ -65,6 +65,12 @@ def authorize(f):
 def index():
     return flask.render_template('index.html')
 
+@app.route('/app-results')
+@authorize
+def app_results():
+    return flask.render_template('app-results.html')
+
+
 @app.route('/app')
 @authorize
 def app_():

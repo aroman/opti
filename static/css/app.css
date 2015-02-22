@@ -43,3 +43,15 @@ input:focus {
 .input-description {
   font-size: 40px;
 }
+
+.results-status {
+  opacity: 0.75;
+  font-size: 26px;
+  font-weight: 300;
+}
+
+.results-date {
+  opacity: 0.6;
+  font-size: 22px;
+  font-weight: 300;
+}

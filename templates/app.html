@@ -14,7 +14,7 @@
   <a id="signout" href="/signout">SIGN OUT</a>
   <div class="container">
 
-    <div id="container-meeting-name">
+    <div id="container-meeting-name" style="display:none">
       <div class="row">
         <div class="input-field col offset-s1 s10">
           <span class="input-description">What&rsquo;s the meeting about?</span>
@@ -53,6 +53,19 @@
       </div>
     </div>
 
+    <div id="container-meeting-location" style="display:none">
+      <div class="row">
+        <div class="input-field col offset-s1 s10">
+          <span class="input-description">Where is the meeting?</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col offset-s1 s10">
+          <input id="meeting-location" type="text" class="validate" spellcheck='false' placeholder="tepper school of business rm #152">
+        </div>
+      </div>
+    </div>
+
     <div id="container-meeting-invite" style="display:none">
       <div class="row">
         <div class="input-field col offset-s1 s10">
@@ -67,12 +80,30 @@
       </div>
     </div>
 
+    <div id="container-results">
+      <div class="row">
+        <div class="input-field col offset-s5 s6" style=>
+          <span class="input-description">Results</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col offset-s5 s6">
+          <span class="results-status">Everyone is available!</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col offset-s4 s9">
+          <span class="results-date"><span style="font-weight: normal">Date:</span> February 22</span>
+        </div>
+      </div>
+    </div>
 
     <div class="row">
       <div class="input-field col offset-s1 s10">
         <span id="press-enter">Press enter</span>
       </div>
     </div>
+
   </div>
   <script src="/static/js/underscore.js"></script>
   <!--<script src="/static/js/backbone.js"></script>-->
@@ -83,6 +114,7 @@
       name: "",
       date: "",
       duration: "",
+      location: "",
       invitees: []
     };
 
@@ -140,7 +172,14 @@
     $("#meeting-duration").keyup(function (e) {
       if (e.keyCode === 13) {
         Meeting.duration = $("#meeting-duration").val();
-        transition("duration", "invite");
+        transition("duration", "location");
+      }
+    });
+
+    $("#meeting-location").keyup(function (e) {
+      if (e.keyCode === 13) {
+        Meeting.location = $("#meeting-location").val();
+        transition("location", "invite");
       }
     });
 
