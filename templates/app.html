@@ -14,7 +14,7 @@
   <a id="signout" href="/signout">SIGN OUT</a>
   <div class="container">
 
-    <div id="container-meeting-name" style="display:none">
+    <div id="container-meeting-name">
       <div class="row">
         <div class="input-field col offset-s1 s10">
           <span class="input-description">What&rsquo;s the meeting about?</span>
@@ -80,24 +80,6 @@
       </div>
     </div>
 
-    <div id="container-results">
-      <div class="row">
-        <div class="input-field col offset-s5 s6" style=>
-          <span class="input-description">Results</span>
-        </div>
-      </div>
-      <div class="row">
-        <div class="input-field col offset-s5 s6">
-          <span class="results-status">Everyone is available!</span>
-        </div>
-      </div>
-      <div class="row">
-        <div class="input-field col offset-s4 s9">
-          <span class="results-date"><span style="font-weight: normal">Date:</span> February 22</span>
-        </div>
-      </div>
-    </div>
-
     <div class="row">
       <div class="input-field col offset-s1 s10">
         <span id="press-enter">Press enter</span>
@@ -105,18 +87,34 @@
     </div>
 
   </div>
+  <script src="//js.pusher.com/2.2/pusher.min.js"></script>
   <script src="/static/js/underscore.js"></script>
   <!--<script src="/static/js/backbone.js"></script>-->
   <script src="/static/js/jquery-2.1.1.min.js"></script>
   <script src="/static/js/materialize.js"></script>
   <script>
+
+    Pusher.log = function(message) {
+      if (window.console && window.console.log) {
+        window.console.log(message);
+      }
+    };
+
+    var pusher = new Pusher('d4e7e5fff78e15c3eaa8');
+    var channel = pusher.subscribe('opti');
+    channel.bind('changed', function(data) {
+      alert(JSON.stringify(data));
+    });
+
     var Meeting = {
       name: "",
-      date: "",
+      date: "02/24",
       duration: "",
       location: "",
       invitees: []
     };
+
+    var results = [];
 
     function submitMeeting() {
       $.ajax({
@@ -130,7 +128,31 @@
             console.log(data);
             return
           }
-          alert(JSON.stringify(data));
+          results = data['results'];
+        }
+      });
+    }
+
+    function scheduleMeeting(resultIndex) {
+      postData = {
+        date: Meeting.date,
+        algorithmTime: results[resultIndex].algorithmTime,
+        invitees: Meeting.invitees,
+        name: Meeting.name,
+        location: Meeting.location
+      }
+      $.ajax({
+        type: "POST",
+        url: "/schedule-meeting",
+        data: JSON.stringify(postData),
+        contentType : "application/json",
+        success: function success(data, textStatus) {
+          if (textStatus !== "success") {
+            alert("Something went wrong :(")
+            console.log(data);
+            return
+          }
+          console.log(JSON.stringify(data));
         }
       });
     }
