@@ -73,7 +73,7 @@ def app_():
     # activitylist = events.list(collection='public',
                                    # userId='me').execute()
     # return str(activitylist)
-    # return flask.render_template('app.html')
+    return flask.render_template('app.html')
 
 @app.route('/get-results')
 def get_results():
