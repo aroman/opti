@@ -32,6 +32,27 @@ def algorithmToUser(algorithmTime):
 
     return userTime
 
+# Convert time from algorithm tuple floats to super-readable string
+def algorithmTupleToUser(algorithmTuple):
+    (start, end) = (algorithmTuple[0], algorithmTuple[1])
+    newStartHour = int(start)
+    newEndHour = int(end)
+
+    if newStartHour >= 12:
+        newStartHour -= 12
+    if newEndHour >= 12:
+        newEndHour -= 12
+        suffix = "p"
+    else:
+        suffix = "a"
+
+    newStartMinute = int((start % 1) * 100) * 60 / 100
+    newEndMinute = int((end % 1) * 100) * 60 / 100
+
+    userTime = "%d:%02d - %d:%02d%s" % (newStartHour, newStartMinute, newEndHour, newEndMinute, suffix)
+
+    return userTime
+
 # Convert time from algorithm float to JSON string of just time, no date
 def algorithmToJson(algorithmTime):
     # Hour is same as algorithmTime hour
@@ -57,4 +78,5 @@ def userDateToJsonDate(userDate):
 # print algorithmToUser(19.50)
 # print algorithmToJson(19.50)
 # print userDateToJsonDate("2/24")
+# print algorithmTupleToUser((9.25, 11.5))
 
