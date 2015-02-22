@@ -69,23 +69,17 @@ def index():
 @app.route('/app')
 @authorized
 def app_():
-    try:
-      page_token = None
-      while True:
-        calendar_list = flask.g.service.calendarList().list(pageToken=page_token).execute()
-        for calendar_list_entry in calendar_list['items']:
-          print calendar_list_entry['summary']
-        page_token = calendar_list.get('nextPageToken')
-        if not page_token:
-          break
-
-    except client.AccessTokenRefreshError:
-      print ('The credentials have been revoked or expired, please re-run'
-        'the application to re-authorize.')
-
-    # activitylist = events.list(collection='public',
-                                   # userId='me').execute()
-    # return str(activitylist)
+    # yyyy-mm-ddTHH:MM:ss
+    body = {
+      "timeMin": "2015-02-22T00:00:00Z",
+      "timeMax": "2015-02-23T00:00:00Z",
+      "id": "aviromanoff@gmail.com"
+    }
+    fb = flask.g.service.freebusy().query(body=body).execute()
+    # {'kind': 'calendar#freeBusy',
+    #  'timeMax': '2015-02-23T00:00:00.000Z',
+    #  'timeMin': '2015-02-22T00:00:00.000Z'}
+    pp(fb)
     return flask.render_template('app.html')
 
 @app.route('/get-results', methods=["POST"])
