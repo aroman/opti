@@ -11,6 +11,7 @@
     <link href="/static/css/index-queries.css" rel="stylesheet">
     <script>
       function signinCallback(authResult) {
+        console.log(authResult);
         if (authResult['status']['signed_in']) {
           // Update the app to reflect a signed in user
           // Hide the sign-in button now that the user is authorized, for example:
@@ -51,7 +52,6 @@
                   data-callback="signinCallback"
                   data-clientid="614450015763-gudcs7evjopheo8h6nb9q9ct6ga42pqj.apps.googleusercontent.com"
                   data-cookiepolicy="single_host_origin"
-                  data-requestvisibleactions="http://schema.org/AddAction"
                   data-scope="https://www.googleapis.com/auth/calendar">
                 </span>
               </span>
