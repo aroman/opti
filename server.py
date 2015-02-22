@@ -105,6 +105,7 @@ def results():
       }
       fb = calendar.freebusy().query(body=body).execute()
       fbtimes = fb['calendars'][credential_doc['id']]['busy']
+      pp(fbtimes)
       # {
       #   "avi@romanoff.me": [(st, end), (st, end)]
       # }

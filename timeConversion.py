@@ -9,6 +9,8 @@ def jsonToAlgorithm(jsonTime):
     hour = float(jsonTime[timeStart: timeStart + 2])
     minute = float(jsonTime[timeStart + 3: timeStart + 5])
 
+    hour -= 5 # adjust for tz
+
     # Sum hour and minute/60 to get newTime, round to two decimals
     algorithmTime = round(hour + minute / 60, 2)
 
@@ -57,6 +59,7 @@ def algorithmTupleToUser(algorithmTuple):
 def algorithmToJson(algorithmTime):
     # Hour is same as algorithmTime hour
     hour = int(algorithmTime)
+    hour += 5 # adjust for tz
     # Minute is algorithmTime after decimal as fraction of 60
     minute = int((algorithmTime % 1) * 100) * 60 / 100
 
