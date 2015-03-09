@@ -17,10 +17,11 @@ from oauth2client import client
 
 app = flask.Flask(__name__)
 app.debug = True
-app.secret_key = 'SUPER FUCKIN SECRET'
+app.secret_key = 'SUPER SECRET' # not really
 
 DB_HOST = "db.opti.work"
 
+# i've disabled these credentials :-)
 p = pusher.Pusher(
   app_id='108152',
   key='d4e7e5fff78e15c3eaa8',
